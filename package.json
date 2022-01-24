@@ -1,0 +1,17 @@
+{
+  "name": "embedded_api",
+  "version": "0.0.23",
+  "description": "A structured interface for 2 way communication between an iframed window to its parent. ",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js",
+    "prepublishOnly": "mkdir build; browserify browserify.js > build/bundle.js; terser build/bundle.js -c drop_console=true > build/bundle.min.js; npm version patch"
+  },
+  "keywords": [
+    "iframe",
+    "embedded",
+    "api"
+  ],
+  "author": "Ronen Rabinovici",
+  "license": "MIT"
+}
