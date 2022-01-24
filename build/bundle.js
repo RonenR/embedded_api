@@ -30,7 +30,11 @@ let WrapperApi = {
     // Supports keyPath - dot separated keys.
     getStateParam: function(keyPath) {
         if (window.wsGlobals && window.wsGlobals.PageState && window.wsGlobals.PageState.pageState ) {
-            return window.wsGlobals.PageState.getParam(keyPath);
+            if (keyPath==="*") {
+                return {...window.wsGlobals.PageState.pageState};
+            } else {
+                return window.wsGlobals.PageState.getParam(keyPath);
+            }
         } else {
             return null;
         }
