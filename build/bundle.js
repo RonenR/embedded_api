@@ -78,6 +78,18 @@ window.addEventListener("message", (event) => {
 let EmbeddedApi = {
     wrapper: null,
 
+    actions: {},
+
+    // The host can request this to see which actions are possible.
+    getActions: function () {
+        return { ...EmbeddedApi.actions};
+    },
+
+    // Intended for the embedded window to expose public actions for the host to act on it.
+    addAction: function (key, method) {
+        EmbeddedApi.actions[key] = method;
+    },
+
     foo: function (param) {
         console.log('got param: ', param);
     },
@@ -109,6 +121,22 @@ let EmbeddedApi = {
             window.wsGlobals.PageState.updatePageStateWithParams(newPartialState);
         }
     },
+
+    ///
+    act: function (methodName, paramsArray) {
+        let method;
+        if (EmbeddedApi.actions && EmbeddedApi.actions[methodName] && EmbeddedApi.actions[methodName] instanceof Function) {
+            method = EmbeddedApi.actions[methodName];
+        }
+
+        if (method) {
+            try {
+                method(...paramsArray);
+            } catch (e) {
+
+            }
+        }
+    }
 }
 
 // Has to be public in window so the wrapper can call it on message:
