@@ -46,6 +46,14 @@ const EmbeddedApi = {
         }
     },
 
+    getAuthUser: function () {
+        return wsGlobals.PageState.getStateParam("user");
+    },
+
+    getAuthToken: function () {
+        return EmbeddedApi.actions.getAuthToken ? EmbeddedApi.actions.getAuthToken() : "no_token_method_error";
+    },
+
     // Supports keyPath - dot separated keys.
     getStateParam: function(keyPath) {
         if (window.wsGlobals && window.wsGlobals.PageState ) {
