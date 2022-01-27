@@ -104,8 +104,11 @@ if (EmbeddedApi.isWrapper()) {
             let embeddedWindow = document.querySelector('iframe').contentWindow;
             if (embeddedWindow) {
                 try {
-                    embeddedWindow.wsGlobals.EmbeddedApi.setConnectedWindowApi(EmbeddedApi);
-                    let reflected = EmbeddedApi.connectedWindowApi.reflect("getId");
+                    let iframedWindowApi = embeddedWindow.wsGlobals.EmbeddedApi;
+                    EmbeddedApi.setConnectedWindowApi(iframedWindowApi);
+                    iframedWindowApi.setConnectedWindowApi(EmbeddedApi);
+
+                    let reflected = iframedWindowApi.reflect("getId");
                     if (reflected === EmbeddedApi.getId()) {
                         console.log('hand shake successful');
                     } else {
