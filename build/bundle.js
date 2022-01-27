@@ -102,6 +102,7 @@ if (EmbeddedApi.isWrapper()) {
         console.log('got message: ', event);
         if (event.data==HANDSHAKE_MESSAGE) {
             let embeddedWindow = document.querySelector('iframe').contentWindow;
+            console.log('got embedded window: ', embeddedWindow.wsGlobals);
             if (embeddedWindow) {
                 try {
                     let iframedWindowApi = embeddedWindow.wsGlobals.EmbeddedApi;
