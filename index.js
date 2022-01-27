@@ -31,7 +31,6 @@ const EmbeddedApi = {
 
     setConnectedWindowApi: function (apiObj) {
         EmbeddedApi.connectedWindowApi = apiObj;
-        apiObj.setConnectedWindowApi(EmbeddedApi);
         console.log('got window api: ', apiObj);
     },
 
@@ -102,11 +101,10 @@ if (EmbeddedApi.isWrapper()) {
             console.log('got embedded window: ', embeddedWindow.wsGlobals);
             if (embeddedWindow) {
                 try {
-                    let iframedWindowApi = embeddedWindow.wsGlobals.EmbeddedApi;
-                    EmbeddedApi.setConnectedWindowApi(iframedWindowApi);
-                    iframedWindowApi.setConnectedWindowApi(EmbeddedApi);
+                    EmbeddedApi.setConnectedWindowApi(embeddedWindow.wsGlobals.EmbeddedApi);
+                    embeddedWindow.wsGlobals.EmbeddedApi.setConnectedWindowApi(EmbeddedApi);
 
-                    let reflected = iframedWindowApi.reflect("getId");
+                    let reflected = EmbeddedApi.connectedWindowApi.reflect("getId");
                     if (reflected === EmbeddedApi.getId()) {
                         console.log('hand shake successful');
                     } else {
