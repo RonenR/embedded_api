@@ -62,7 +62,7 @@ const embeddedApi = {
             type: this.ACTION_TYPE_DATA,
             data: data
         }
-        this.connectedWindow().postMessage(message, "*");
+        this.connectedWindow.postMessage(message, "*");
     },
     
     /// param is string. Can be colon separated if another param is needed.
@@ -71,7 +71,7 @@ const embeddedApi = {
             type: this.ACTION_TYPE_REQUEST,
             data: param
         }
-        this.connectedWindow().postMessage(message, "*");
+        this.connectedWindow.postMessage(message, "*");
     },
 
     /// param is string. Can be colon separated if another param is needed. Supports keypath nesting by dot.
