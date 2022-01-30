@@ -52,7 +52,7 @@ const embeddedApi = {
             } else if (message.type === this.ACTION_TYPE_DATA) {
                 this._updateStateWith(message.data);
             } else if (message.type === this.ACTION_TYPE_REQUEST) {
-                this._onRequest(message.data);
+                this._onRequest(message.data, message.requestCode);
             } 
         }, false);
     },
@@ -60,23 +60,32 @@ const embeddedApi = {
     sendDataToConnectedWindow: function (data) {
         let message = {
             type: this.ACTION_TYPE_DATA,
-            data: JSON.parse(JSON.stringify(data))
+            data: data
         }
-        console.log("this.connectedWindow = ", this.connectedWindow);
-        this.connectedWindow.postMessage(message, "*");
+        try {
+            this.connectedWindow.postMessage(message, "*");
+        } catch (e) {
+            try {
+                message.data = JSON.parse(JSON.stringify(data));
+                this.connectedWindow.postMessage(message, "*");
+            } catch (e) {
+                console.error('error in sendDataToConnectedWindow: ', e);
+            }
+        }
     },
     
     /// param is string. Can be colon separated if another param is needed.
-    requestParamFromConnectedWindow: function (param) {
+    requestParamFromConnectedWindow: function (param, requestCode) {
         let message = {
             type: this.ACTION_TYPE_REQUEST,
-            data: param
+            data: param,
+            requestCode: requestCode
         }
         this.connectedWindow.postMessage(message, "*");
     },
 
     /// param is string. Can be colon separated if another param is needed. Supports keypath nesting by dot.
-    _onRequest: function (param) {
+    _onRequest: function (param, requestCode) {
         if (param.startsWith("ping")) {
             try {
                 let payload = param.split(":")[1];
@@ -91,6 +100,10 @@ const embeddedApi = {
                     data[param] = window.wsGlobals.PageState.getParam(param);
                 } else {
                     data = window.wsGlobals.PageState.pageState;
+                }
+
+                if (requestCode) {
+                    data.responseToRequestCodeNumber = requestCode;
                 }
                 this.sendDataToConnectedWindow(data);
             }
