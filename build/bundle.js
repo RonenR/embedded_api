@@ -60,7 +60,7 @@ const embeddedApi = {
     sendDataToConnectedWindow: function (data) {
         let message = {
             type: this.ACTION_TYPE_DATA,
-            data: data
+            data: JSON.parse(JSON.stringify(data))
         }
         console.log("this.connectedWindow = ", this.connectedWindow);
         this.connectedWindow.postMessage(message, "*");
