@@ -59,6 +59,7 @@ const embeddedApi = {
             type: this.ACTION_TYPE_DATA,
             data: data
         }
+        console.log("this.connectedWindow = ", this.connectedWindow);
         this.connectedWindow.postMessage(message, "*");
     },
     
