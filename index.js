@@ -109,7 +109,9 @@ const embeddedApi = {
 
     _updateStateWith: function(newPartialState) {
         if (newPartialState && window.wsGlobals && window.wsGlobals.PageState ) {
-            window.wsGlobals.PageState.updatePageStateWithParams({byConnectedWindow: newPartialState});
+            let oldState = window.wsGlobals.PageState.getParam("byConnectedWindow") || {};
+            let mergedState = {...oldState, ...newPartialState};
+            window.wsGlobals.PageState.updatePageStateWithParams({byConnectedWindow: mergedState});
         }
     },
 }
