@@ -2,7 +2,7 @@
 
 # How to use?
 
-Place the following at the head of the wrapper, and at the end of body of the embedded:
+Place the following at the head, and probably smart after 'page_state' package.
 
 <script src="https://unpkg.com/embedded_api/build/bundle.min.js"></script>
 
@@ -11,3 +11,5 @@ Place the following at the head of the wrapper, and at the end of body of the em
 - This package is published both on GitHub and on npmjs.
 - To publish an updated version - simply run `npm publish`, it will commit & push updates both to github and npm.
 
+# TODOs:
+- Implement a cross-origin solution? See here: https://stackoverflow.com/questions/25098021/securityerror-blocked-a-frame-with-origin-from-accessing-a-cross-origin-frame

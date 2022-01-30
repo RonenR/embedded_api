@@ -3,130 +3,103 @@
 
 window.wsGlobals = window.wsGlobals || {};
 
-const HANDSHAKE_MESSAGE = "loaded:embedded_component";
-const WRAPPER_ID = "98s7vkjh";
-const EMBEDDED_ID = "kjhdfn";
+const embeddedApi = {
 
-const EmbeddedApi = {
+    API_IDENTIFIER_MESSAGE: "embedded_api_window",
+    HANDSHAKE_MESSAGE: "loaded:embedded_component",
+    WRAPPER_ID: "98s7vkjh",
+    EMBEDDED_ID: "kjhdfn",
+    ACTION_TYPE_DATA: "ACTION_TYPE_DATA",
+    ACTION_TYPE_REQUEST: "ACTION_TYPE_REQUEST",
 
+    connectedWindow: null,
     connectedWindowApi: null,
-
     actions: {},
+    isWrapper: null,
 
-    getId: function () {
-        if (EmbeddedApi.isWrapper()) {
-            return WRAPPER_ID;
+    init: function () {
+
+        // set 'isWrapper':
+        if (window.top===window) {
+            this.isWrapper = true;
         } else {
-            return EMBEDDED_ID;
+            this.isWrapper = false;
+            // Post message to top parent host, to initiate connection:
+            // Assumes wrapper has this initiated already before building the iframe. ie -> should be in the head.
+            window.top.postMessage(this.HANDSHAKE_MESSAGE, "*");
         }
-    },
 
-    isWrapper: function () {
-        return window.top===window;
-    },
-
-    isConnected: function () {
-        return Boolean(EmbeddedApi.connectedWindowApi);
-    },
-
-    setConnectedWindowApi: function (apiObj) {
-        EmbeddedApi.connectedWindowApi = apiObj;
-        console.log('got window api: ', apiObj);
-    },
-
-    /// Useful for handshake, testing the 2 way connection.
-    reflect: function(reflectedMethod, param) {
-        try {
-            return EmbeddedApi.connectedWindowApi[reflectedMethod](param);
-        } catch (e) {
-            return null;
+        // set 'connectedWindow':
+        if (!this.isWrapper) {
+            this.connectedWindow = window.top;
+        } else {
+            try {
+                this.connectedWindow = document.querySelector('iframe').contentWindow;
+            } catch (e) {
+                this.connectedWindow = null;
+            }
         }
+
+        window.addEventListener("message", (event) => {
+            console.log('got message: ', event);
+            let message = event.data;
+            
+            if (message == this.HANDSHAKE_MESSAGE) {
+                this.connectedWindow = document.querySelector('iframe').contentWindow;
+            } else if (message.type === this.ACTION_TYPE_DATA) {
+                this._updateStateWith(message.data);
+            } else if (message.type === this.ACTION_TYPE_REQUEST) {
+                this._onRequest(message.data);
+            } 
+        }, false);
     },
 
-    getAuthUser: function () {
-        return wsGlobals.PageState.getStateParam("user");
+    sendDataToConnectedWindow: function (data) {
+        let message = {
+            type: this.ACTION_TYPE_DATA,
+            data: data
+        }
+        this.connectedWindow().postMessage(message, "*");
+    },
+    
+    /// param is string. Can be colon separated if another param is needed.
+    requestParamFromConnectedWindow: function (param) {
+        let message = {
+            type: this.ACTION_TYPE_REQUEST,
+            data: param
+        }
+        this.connectedWindow().postMessage(message, "*");
     },
 
-    getAuthToken: function () {
-        return EmbeddedApi.actions.getAuthToken ? EmbeddedApi.actions.getAuthToken() : "no_token_method_error";
-    },
-
-    // Supports keyPath - dot separated keys.
-    getStateParam: function(keyPath) {
-        if (window.wsGlobals && window.wsGlobals.PageState ) {
-            if (keyPath==="*") {
-                return {...window.wsGlobals.PageState.pageState};
-            } else {
-                return window.wsGlobals.PageState.getParam(keyPath);
+    /// param is string. Can be colon separated if another param is needed. Supports keypath nesting by dot.
+    _onRequest: function (param) {
+        if (param.startsWith("ping")) {
+            try {
+                let payload = param.split(":")[1];
+                console.log('got ping: ', payload);
+            } catch (e) {
+                
             }
         } else {
-            return null;
+            if (window.wsGlobals && window.wsGlobals.PageState) {
+                let data = {};
+                if (param!=="*") {
+                    data[param] = window.wsGlobals.PageState.getParam(param);
+                } else {
+                    data = window.wsGlobals.PageState.pageState;
+                }
+                this.sendDataToConnectedWindow(data);
+            }
         }
     },
 
-    updateStateWith: function(newPartialState) {
+    _updateStateWith: function(newPartialState) {
         if (newPartialState && window.wsGlobals && window.wsGlobals.PageState ) {
             window.wsGlobals.PageState.updatePageStateWithParams({byConnectedWindow: newPartialState});
         }
     },
-
-    // The connected window can request this to see which actions are possible.
-    getActions: function () {
-        return { ...EmbeddedApi.actions};
-    },
-
-    // Intended for the window to expose public actions for the connected window to act on it.
-    addAction: function (key, method) {
-        EmbeddedApi.actions[key] = method;
-    },
-
-    /// Run a method exposed by the window to the EmbeddedApi.
-    act: function (methodName, paramsArray) {
-        let method;
-        if (EmbeddedApi.actions && EmbeddedApi.actions[methodName] && EmbeddedApi.actions[methodName] instanceof Function) {
-            method = EmbeddedApi.actions[methodName];
-        }
-
-        if (method) {
-            try {
-                method(...paramsArray);
-            } catch (e) {
-
-            }
-        }
-    }
 }
 
-// Has to be public in window so the wrapper can call it on message:
-window.wsGlobals.EmbeddedApi = EmbeddedApi;
-
-
-if (EmbeddedApi.isWrapper()) {
-    window.addEventListener("message", (event) => {
-        console.log('got message: ', event);
-        if (event.data==HANDSHAKE_MESSAGE) {
-            let embeddedWindow = document.querySelector('iframe').contentWindow;
-            console.log('got embedded window: ', embeddedWindow.wsGlobals);
-            if (embeddedWindow) {
-                try {
-                    EmbeddedApi.setConnectedWindowApi(embeddedWindow.wsGlobals.EmbeddedApi);
-                    embeddedWindow.wsGlobals.EmbeddedApi.setConnectedWindowApi(EmbeddedApi);
-
-                    let reflected = EmbeddedApi.connectedWindowApi.reflect("getId");
-                    if (reflected === EmbeddedApi.getId()) {
-                        console.log('hand shake successful');
-                    } else {
-                        console.log('hand shake error');
-                    }
-                } catch (e) {
-                    console.log('hand shake error - exception: ' + e);
-                }
-            }
-        }
-    }, false);
-} else {
-    // Post message to top parent host, to initiate connection:
-    window.top.postMessage(HANDSHAKE_MESSAGE, "*");
-}
-
-exports.EmbeddedApi = EmbeddedApi;
+embeddedApi.init();
+window.wsGlobals.embeddedApi = embeddedApi;
+exports.embeddedApi = embeddedApi;
