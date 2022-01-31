@@ -1,6 +1,6 @@
 {
   "name": "embedded_api",
-  "version": "0.0.41",
+  "version": "0.0.42",
   "description": "A structured interface for 2 way communication between an iframed window to its parent. ",
   "main": "index.js",
   "scripts": {
